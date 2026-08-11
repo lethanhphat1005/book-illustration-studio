@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; 
 
 const loginSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters long'),
@@ -12,6 +13,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const useLoginController = () => {
+  const navigate = useNavigate(); 
+
   const {
     register,
     handleSubmit,
@@ -29,14 +32,11 @@ export const useLoginController = () => {
       
       console.log('Authentication successful! Payload:', response.data);
 
-      // Store user identity in localStorage to persist the session
+      // Remember user data
       localStorage.setItem('studio_user', JSON.stringify(response.data.user));
 
-      // --- ADD THIS LINE TO TEST SUCCESS ---
-      alert(`Success! Welcome to the Studio, ${response.data.user.fullName || data.fullName}`);
-
-      // TODO: Navigate the user to the Project List page
-      // Example (if using react-router-dom): navigate('/projects');
+      // Login success then moving to next page
+      navigate('/dashboard');
 
     } catch (error: any) {
       console.error('Backend connection failed:', error);
