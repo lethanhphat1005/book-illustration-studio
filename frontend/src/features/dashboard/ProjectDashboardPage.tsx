@@ -1,10 +1,9 @@
-
 import { Header } from '../../components/Header';
 import { ProjectCard } from '../../components/ProjectCard';
 import { useProjectsController } from './useProjectsController';
 
 export const ProjectDashboardPage = () => {
-  const { projects, isLoading, error } = useProjectsController();
+  const { projects, isLoading, error, handleCreateProject } = useProjectsController();
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -23,7 +22,7 @@ export const ProjectDashboardPage = () => {
           </div>
 
           <button
-            onClick={() => alert('Navigate to New Project Creation Page')}
+            onClick={handleCreateProject}
             className="px-5 py-2.5 bg-gradient-to-r from-orange-500 via-rose-500 to-purple-600 text-white font-semibold text-sm rounded-xl shadow-md hover:opacity-95 transition-all flex items-center gap-2"
           >
             <span>+ New Project</span>
@@ -59,7 +58,7 @@ export const ProjectDashboardPage = () => {
               You haven't created any illustration projects. Upload a book text to begin the 5-step artwork pipeline.
             </p>
             <button
-              onClick={() => alert('Navigate to New Project Creation Page')}
+              onClick={handleCreateProject}
               className="px-4 py-2 bg-slate-900 text-white font-semibold text-sm rounded-xl hover:bg-slate-800 transition-colors"
             >
               Create Your First Project

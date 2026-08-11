@@ -48,9 +48,14 @@ export const useProjectsController = () => {
     fetchDashboardData();
   }, [navigate]);
 
+  const handleCreateProject = () => {
+    navigate('/projects/new');
+  };
+
   return {
     projects,
     isLoading,
     error,
+    handleCreateProject,
   };
 };
