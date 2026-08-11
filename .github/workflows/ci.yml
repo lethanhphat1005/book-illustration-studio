@@ -15,46 +15,59 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: book_studio
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: password123
+          POSTGRES_DB: gradion_db
         ports:
-          - 5432:5432
+          - 5433:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
+          --health-cmd "pg_isready -U admin -d gradion_db"
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     # Passing the exact database URL Prisma expects
     env:
-      DATABASE_URL: postgresql://postgres:password@localhost:5432/book_studio?schema=public
+      PORT: 3000
+      NODE_ENV: test
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
 
-      # 2. Installing dependencies (Mirroring start.sh step 2)
-      - name: Install Backend Dependencies
-        run: cd backend && npm ci
+      - name: Install Backend
+        working-directory: backend
+        run: npm ci
 
-      - name: Install Frontend Dependencies
-        run: cd frontend && npm ci
+      - name: Install Frontend
+        working-directory: frontend
+        run: npm ci
 
-      # 3. Pushing Database Schema (Mirroring start.sh step 3)
-      - name: Push Prisma Schema
-        run: cd backend && npx prisma db push
+      - name: Check PostgreSQL
+        run: |
+          node -e "const net=require('net'); const s=net.connect(5433,'127.0.0.1',()=>{console.log('PostgreSQL OK');s.end()}); s.on('error',e=>{console.error(e);process.exit(1)})"
 
-      # 4. Running Backend Tests (Mirroring test.sh step 1)
-      - name: Run Backend Tests
-        run: cd backend && npm test
+      - name: Prisma Database Push
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://admin:password123@127.0.0.1:5433/gradion_db?schema=public
+        run: npx prisma db push
 
-      # 5. Running Frontend Tests (Mirroring test.sh step 2)
-      - name: Run Frontend Tests
-        run: cd frontend && npm test
+      - name: Backend Tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://admin:password123@127.0.0.1:5433/gradion_db?schema=public
+        run: npm test
+
+      - name: Frontend Build
+        working-directory: frontend
+        run: npm run build

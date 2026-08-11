@@ -1,15 +1,19 @@
 #!/bin/bash
+set -e
 
-echo "1. Starting PostgreSQL Database..."
-docker-compose up -d
+echo "1. Starting PostgreSQL..."
+docker compose up -d
 
 echo "2. Installing dependencies..."
-(cd backend && npm install)
-(cd frontend && npm install)
+(cd backend && npm ci)
+(cd frontend && npm ci)
 
-echo "3. Pushing Database Schema..."
+echo "3. Pushing Prisma schema..."
 (cd backend && npx prisma db push)
 
-echo "4. Starting Backend & Frontend..."
-# Run 2 servers at the same time
-npx concurrently "cd backend && npm run dev" "cd frontend && npm run dev"
+echo "4. Starting application..."
+
+npx concurrently \
+  "cd backend && npm run dev" \
+  "cd frontend && npm run dev"
+```
