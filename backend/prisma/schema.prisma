@@ -1,13 +1,106 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
-}
-
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum PipelineStep {
+  INIT           // Just created, no data uploaded yet
+  STYLE          // Step 1: Defining the art style
+  CHARACTERS     // Step 2: Extracting character descriptions
+  PORTRAITS      // Step 3: Generating character portraits
+  CHAPTERS       // Step 4: Extracting chapter summaries
+  ILLUSTRATIONS  // Step 5: Generating chapter illustrations
+}
+
+enum JobStatus {
+  IDLE
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// -----------------------------------------------------------------------------
+// MODELS
+// -----------------------------------------------------------------------------
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+}
+
+model Project {
+  id                 String       @id @default(uuid())
+  userId             String
+  user               User         @relation(fields: [userId], references: [id])
+  
+  title              String
+  
+  // Cost Discipline: Gemini File API references
+  geminiFileName     String?      // e.g., "files/xyz123" used for API management
+  geminiFileUri      String?      // e.g., "https://generativelanguage.googleapis.com/v1beta/files/xyz123"
+  geminiFileMimeType String?      // e.g., "text/plain" or "application/pdf"
+
+  // ---------------------------------------------------------------------------
+  // STATE & CONCURRENCY MANAGEMENT
+  // ---------------------------------------------------------------------------
+  currentStep        PipelineStep @default(INIT)
+  status             JobStatus    @default(IDLE)
+  
+  // Optimistic Concurrency Token
+  version            Int          @default(0) 
+
+  // ---------------------------------------------------------------------------
+  // PIPELINE DATA
+  // ---------------------------------------------------------------------------
+  stylePrompt        String?      // Generated in Step 1
+  
+  characters         Character[]  // Generated in Steps 2 & 3
+  chapters           Chapter[]    // Generated in Steps 4 & 5
+  
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+model Character {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  name        String
+  description String
+  isAdult     Boolean  @default(false)
+  portraitUrl String?  
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+    @@index([projectId])
+  }
+
+  model Chapter {
+    id              String   @id @default(uuid())
+    projectId       String
+    project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    
+    chapterNumber   Int
+    contentSummary  String?
+    illustrationUrl String?  
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([projectId])
 }
