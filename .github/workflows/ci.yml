@@ -1,0 +1,60 @@
+name: Book Illustration Studio CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # 1. Starting PostgreSQL Database (Mirroring start.sh step 1)
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: book_studio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # Passing the exact database URL Prisma expects
+    env:
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/book_studio?schema=public
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      # 2. Installing dependencies (Mirroring start.sh step 2)
+      - name: Install Backend Dependencies
+        run: cd backend && npm ci
+
+      - name: Install Frontend Dependencies
+        run: cd frontend && npm ci
+
+      # 3. Pushing Database Schema (Mirroring start.sh step 3)
+      - name: Push Prisma Schema
+        run: cd backend && npx prisma db push
+
+      # 4. Running Backend Tests (Mirroring test.sh step 1)
+      - name: Run Backend Tests
+        run: cd backend && npm test
+
+      # 5. Running Frontend Tests (Mirroring test.sh step 2)
+      - name: Run Frontend Tests
+        run: cd frontend && npm test
