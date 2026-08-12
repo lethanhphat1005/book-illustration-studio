@@ -6,6 +6,7 @@ import { useProjectDetailController } from './useProjectDetailController';
 import { CharactersView } from '../character-extraction/CharactersView';
 import { PortraitsView } from '../potraits/PortraitsView';
 import { ChaptersView } from '../chapters/ChaptersView';
+import { IllustrationsView } from '../illustrations/IllustrationsView';
 
 const PIPELINE_LABELS: Record<PipelineStep, string> = {
   INIT: 'Art Style',
@@ -133,8 +134,11 @@ export const ProjectDetailPage = () => {
                 />
               )}
           
-              {(project.currentStep !== 'INIT' && project.currentStep !== 'STYLE' && project.currentStep !== 'CHARACTERS') && (
-                <div className="text-gray-500">View for next steps is under construction...</div>
+              {(project.currentStep === 'CHAPTERS' || project.currentStep === 'ILLUSTRATIONS') && (
+                <IllustrationsView 
+                  project={project} 
+                  onUpdateProject={(updated) => setProject(updated)} 
+                />
               )}
             </>
           )}

@@ -29,6 +29,7 @@ export const usePortraitsController = ({ project, onUpdateProject }: UsePortrait
       const updatedProject: ProjectDetail = {
         ...project,
         characters: updatedCharacters,
+        currentStep: 'PORTRAITS', // Auto-advance immediately without a second click
       };
 
       onUpdateProject(updatedProject);
@@ -40,28 +41,10 @@ export const usePortraitsController = ({ project, onUpdateProject }: UsePortrait
     }
   };
 
-  const handleProceed = async () => {
-    setIsProcessing(true);
-    
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500)); 
-      
-      const updatedProject: ProjectDetail = {
-        ...project,
-        currentStep: 'PORTRAITS', // Đẩy sang bước tiếp theo (Chapters)
-      };
-      
-      onUpdateProject(updatedProject);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return {
     characters: project.characters || [],
     isProcessing,
     error,
     handleGeneratePortraits,
-    handleProceed,
   };
 };

@@ -15,7 +15,6 @@ export const useChaptersController = ({ project, onUpdateProject }: UseChaptersC
     setError(null);
     
     try {
-      // Fake API Call to Gemini Text Model
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const mockChapters: Chapter[] = [
@@ -30,7 +29,7 @@ export const useChaptersController = ({ project, onUpdateProject }: UseChaptersC
       const updatedProject: ProjectDetail = {
         ...project,
         chapters: mockChapters,
-        currentStep: 'PORTRAITS',
+        currentStep: 'CHAPTERS', 
       };
 
       onUpdateProject(updatedProject);
@@ -42,31 +41,9 @@ export const useChaptersController = ({ project, onUpdateProject }: UseChaptersC
     }
   };
 
-  const handleProceed = async () => {
-    setIsProcessing(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500)); 
-      
-      const updatedProject: ProjectDetail = {
-        ...project,
-        currentStep: 'CHAPTERS',
-      };
-      
-      onUpdateProject(updatedProject);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const chapters: Chapter[] = project.chapters || [];
-  const hasChapters = chapters.length > 0;
-
   return {
-    chapters,
-    hasChapters,
     isProcessing,
     error,
     handleGenerateChapters,
-    handleProceed,
   };
 };

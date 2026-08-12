@@ -1,5 +1,4 @@
-import { ChapterCard } from "../../components/ChapterCard";
-import { CharacterCard } from "../../components/CharacterCard"; // Import thêm thẻ nhân vật
+import { CharacterCard } from "../../components/CharacterCard"; 
 import type { ProjectDetail } from "../../types/pipeline";
 import { useChaptersController } from "./useChaptersController";
 
@@ -10,12 +9,9 @@ interface ChaptersViewProps {
 
 export const ChaptersView = ({ project, onUpdateProject }: ChaptersViewProps) => {
   const { 
-    chapters, 
-    hasChapters, 
     isProcessing, 
     error, 
-    handleGenerateChapters, 
-    handleProceed 
+    handleGenerateChapters 
   } = useChaptersController({ project, onUpdateProject });
 
   return (
@@ -30,17 +26,9 @@ export const ChaptersView = ({ project, onUpdateProject }: ChaptersViewProps) =>
           <span className="font-semibold text-[#ff6a00]">Quick Note:</span> To keep our storybook focused, we will carefully select and plan exactly <span className="font-bold text-gray-700">one key scene</span> to illustrate.
         </p>
         
-        {hasChapters ? (
-          <div className="mt-8 max-w-3xl">
-            {chapters.map((chap) => (
-              <ChapterCard key={chap.id} chapter={chap} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-[200px] border-2 border-dashed border-gray-200 rounded-[1.25rem] bg-gray-50/50 mt-8 max-w-3xl">
-            <p className="text-gray-400 font-medium text-[15px]">No scenes planned yet. Click the button below to start.</p>
-          </div>
-        )}
+        <div className="flex items-center justify-center h-[200px] border-2 border-dashed border-gray-200 rounded-[1.25rem] bg-gray-50/50 mt-8 max-w-3xl">
+          <p className="text-gray-400 font-medium text-[15px]">No scenes planned yet. Click the button below to start.</p>
+        </div>
 
         {project.characters && project.characters.length > 0 && (
           <div className="mt-12 pt-8 border-t border-gray-100">
@@ -72,7 +60,7 @@ export const ChaptersView = ({ project, onUpdateProject }: ChaptersViewProps) =>
         </div>
 
         <button
-          onClick={hasChapters ? handleProceed : handleGenerateChapters}
+          onClick={handleGenerateChapters}
           disabled={isProcessing}
           className="px-8 py-3.5 bg-[#1a1a1a] text-white font-semibold text-[15px] rounded-xl hover:bg-black shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2.5 group"
         >
@@ -82,16 +70,17 @@ export const ChaptersView = ({ project, onUpdateProject }: ChaptersViewProps) =>
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              {hasChapters ? 'Proceeding...' : 'Planning Scenes...'}
+              Planning Scenes...
             </>
           ) : (
             <>
-              {hasChapters ? 'Proceed to Illustrations' : 'Generate Chapters'}
+              Generate Chapters
               <svg className="w-4 h-4 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
             </>
           )}
         </button>
       </div>
+
     </div>
   );
 };
