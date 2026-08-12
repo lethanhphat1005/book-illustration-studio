@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import type { ProjectDetail, Character } from '../../types/pipeline';
 
 interface UseCharactersControllerProps {
@@ -15,36 +16,25 @@ export const useCharactersController = ({ project, onUpdateProject }: UseCharact
     setError(null);
     
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const userJson = localStorage.getItem('studio_user');
+      if (!userJson) return;
+      const user = JSON.parse(userJson);
 
-      const mockCharacters: Character[] = [
-        {
-          id: 'char-1',
-          name: 'Mr. Toad',
-          description: 'A wealthy, jovial, and reckless toad who loves fast cars, tweed suits, and grand adventures. He is impulsive but fiercely loyal to his friends.',
-          isAdult: true,
-          portraitUrl: null,
-        },
-        {
-          id: 'char-2',
-          name: 'Ratty (The Water Rat)',
-          description: 'A sensible, polite, and deeply poetic water rat. He spends his days sculling on the river and organizing picnics, always wearing a neat nautical outfit.',
-          isAdult: true,
-          portraitUrl: null,
-        }
-      ];
+      const response = await axios.post(`http://localhost:3000/api/projects/${project.id}/characters`, {
+        version: project.version,
+      }, {
+        headers: { 'x-user-id': user.id }
+      });
 
-      // Update both characters and the currentStep in one go
-      const updatedProject: ProjectDetail = {
-        ...project,
-        characters: mockCharacters,
-        currentStep: 'CHARACTERS', 
-      };
-
-      onUpdateProject(updatedProject);
+      onUpdateProject(response.data.project);
 
     } catch (err: any) {
-      setError('Failed to extract characters. Please try again.');
+      console.error('Failed to extract characters:', err);
+      if (err.response?.status === 409) {
+        setError('Conflict detected: Project updated elsewhere. Please refresh.');
+      } else {
+        setError(err.response?.data?.error || 'Failed to extract characters. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }

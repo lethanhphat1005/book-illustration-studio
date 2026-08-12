@@ -2,6 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { loadEnvFile } from 'node:process';
+import { generateCharacterPortraitImage } from './gemini.service';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 try {
   loadEnvFile();
@@ -12,6 +14,7 @@ const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export const getProjectById = async (projectId: string, userId: string) => {
   return await prisma.project.findFirst({
@@ -85,6 +88,130 @@ export const advanceProjectStyle = async (
 
     return updatedProject;
   } catch (error) {
+    throw new Error('OCC_CONFLICT');
+  }
+};
+
+export const extractCharactersForProject = async (
+  projectId: string,
+  userId: string,
+  currentVersion: number
+) => {
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, userId },
+  });
+
+  if (!project) throw new Error('PROJECT_NOT_FOUND');
+  if (!project.geminiFileUri) throw new Error('GEMINI_FILE_URI_MISSING');
+
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-3.6-flash',
+    generationConfig: {
+      responseMimeType: 'application/json',
+    }
+  });
+
+  const prompt = "Can you describe the main characters (only the adults) and prepare a prompt describing them with as much details as possible. Return a JSON array where each object has fields 'name' and 'prompt'.";
+
+  const result = await model.generateContent([
+    {
+      fileData: {
+        fileUri: project.geminiFileUri,
+        mimeType: project.geminiFileMimeType || 'text/plain',
+      },
+    },
+    prompt,
+  ]);
+
+  const responseText = result.response.text() || '[]';
+  let extractedChars = [];
+  try {
+    const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    extractedChars = JSON.parse(cleanJson);
+  } catch (e) {
+    extractedChars = [
+      { name: 'Protagonist', prompt: 'Main adult character of the story.' }
+    ];
+  }
+
+  // Enforce hard requirement 2 characters
+  const finalChars = extractedChars.slice(0, 2);
+
+  await prisma.character.deleteMany({ where: { projectId } });
+
+  for (const char of finalChars) {
+    await prisma.character.create({
+      data: {
+        projectId,
+        name: char.name || 'Character',
+        description: char.prompt || char.description || 'Main character description',
+        isAdult: true,
+      }
+    });
+  }
+
+  try {
+    const updatedProject = await prisma.project.update({
+      where: { id: projectId, version: currentVersion },
+      data: {
+        currentStep: 'CHARACTERS',
+        status: 'IDLE',
+        version: { increment: 1 },
+      },
+      include: { characters: true, chapters: true },
+    });
+
+    return updatedProject;
+  } catch (err) {
+    throw new Error('OCC_CONFLICT');
+  }
+};
+
+export const generatePortraitsForProject = async (
+  projectId: string,
+  userId: string,
+  currentVersion: number
+) => {
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, userId },
+    include: { characters: true }
+  });
+
+  if (!project) throw new Error('PROJECT_NOT_FOUND');
+  if (project.characters.length === 0) throw new Error('NO_CHARACTERS_FOUND');
+  const targetCharacters = project.characters.slice(0, 2);
+
+  for (const char of targetCharacters) {
+    const portraitUrl = await generateCharacterPortraitImage(
+      char.name,
+      char.description,
+      project.stylePrompt || 'Classic storybook style',
+      projectId,
+      char.id
+    );
+
+    await prisma.character.update({
+      where: { id: char.id },
+      data: { portraitUrl }
+    });
+  }
+
+  try {
+    const updatedProject = await prisma.project.update({
+      where: {
+        id: projectId,
+        version: currentVersion,
+      },
+      data: {
+        currentStep: 'PORTRAITS',
+        status: 'IDLE',
+        version: { increment: 1 },
+      },
+      include: { characters: true, chapters: true }
+    });
+
+    return updatedProject;
+  } catch (err) {
     throw new Error('OCC_CONFLICT');
   }
 };
