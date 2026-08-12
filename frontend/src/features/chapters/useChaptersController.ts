@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { ProjectDetail, Chapter } from '../../types/pipeline';
+import axios from 'axios';
+import type { ProjectDetail } from '../../types/pipeline';
 
 interface UseChaptersControllerProps {
   project: ProjectDetail;
@@ -15,27 +16,25 @@ export const useChaptersController = ({ project, onUpdateProject }: UseChaptersC
     setError(null);
     
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const userJson = localStorage.getItem('studio_user');
+      if (!userJson) return;
+      const user = JSON.parse(userJson);
 
-      const mockChapters: Chapter[] = [
-        {
-          id: 'chap-1',
-          chapterNumber: 1,
-          contentSummary: 'A beautiful, wide shot of Ratty and Mr. Toad sitting on the grassy riverbank. Ratty is packing a wicker picnic basket while Toad looks enthusiastically at a map. Warm afternoon sunlight filtering through the willow trees.',
-          illustrationUrl: null, 
-        }
-      ];
+      const response = await axios.post(`http://localhost:3000/api/projects/${project.id}/chapters`, {
+        version: project.version,
+      }, {
+        headers: { 'x-user-id': user.id }
+      });
 
-      const updatedProject: ProjectDetail = {
-        ...project,
-        chapters: mockChapters,
-        currentStep: 'CHAPTERS', 
-      };
-
-      onUpdateProject(updatedProject);
+      onUpdateProject(response.data.project);
 
     } catch (err: any) {
-      setError('Failed to generate chapter prompts. Please try again.');
+      console.error('Failed to extract chapters:', err);
+      if (err.response?.status === 409) {
+        setError('Conflict detected: Project updated elsewhere. Please refresh.');
+      } else {
+        setError(err.response?.data?.error || 'Failed to extract chapters. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }

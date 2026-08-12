@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { ProjectDetail, Character } from '../../types/pipeline';
+import axios from 'axios';
+import type { ProjectDetail } from '../../types/pipeline';
 
 interface UsePortraitsControllerProps {
   project: ProjectDetail;
@@ -15,26 +16,25 @@ export const usePortraitsController = ({ project, onUpdateProject }: UsePortrait
     setError(null);
     
     try {
-      // Fake Calling API
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const userJson = localStorage.getItem('studio_user');
+      if (!userJson) return;
+      const user = JSON.parse(userJson);
 
-      const updatedCharacters: Character[] = project.characters.map((char) => {
-          return {
-              ...char,
-              portraitUrl: `https://picsum.photos/seed/${char.id}/400/600`
-          };
+      const response = await axios.post(`http://localhost:3000/api/projects/${project.id}/portraits`, {
+        version: project.version, 
+      }, {
+        headers: { 'x-user-id': user.id }
       });
 
-      const updatedProject: ProjectDetail = {
-        ...project,
-        characters: updatedCharacters,
-        currentStep: 'PORTRAITS', 
-      };
-
-      onUpdateProject(updatedProject);
+      onUpdateProject(response.data.project);
 
     } catch (err: any) {
-      setError('Failed to generate portraits. Please try again.');
+      console.error('Failed to generate portraits:', err);
+      if (err.response?.status === 409) {
+        setError('Conflict detected: Project updated elsewhere. Please refresh.');
+      } else {
+        setError(err.response?.data?.error || 'Failed to generate portraits. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }

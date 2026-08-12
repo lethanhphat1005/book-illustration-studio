@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import type { ProjectDetail } from '../../types/pipeline';
 
 export const useProjectDetailController = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  const safeProjectId = Array.isArray(projectId) ? projectId[0] : projectId;
   const navigate = useNavigate();
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
@@ -21,31 +23,23 @@ export const useProjectDetailController = () => {
           navigate('/login');
           return;
         }
-        
-        // --- WARNING ---
-        // Change Backend into API GET /api/projects/:id when have API from Backend
-        setTimeout(() => {
-          setProject({
-            id: projectId || 'mock-123',
-            title: 'The Wind in the Willows',
-            currentStep: 'INIT', 
-            status: 'IDLE',
-            version: 0,
-            stylePrompt: null,
-            characters: [],
-            chapters: [],
-          });
-          setIsLoading(false);
-        }, 800);
+        const user = JSON.parse(userJson);
 
+        const response = await axios.get(`http://localhost:3000/api/projects/${safeProjectId}`, {
+          headers: { 'x-user-id': user.id }
+        });
+
+        setProject(response.data.project);
       } catch (err: any) {
-        setError('Failed to load project details.');
+        console.error('Failed to load project details:', err);
+        setError('Failed to load project details from server.');
+      } finally {
         setIsLoading(false);
       }
     };
 
-    if (projectId) fetchProjectDetail();
-  }, [projectId, navigate]);
+    if (safeProjectId) fetchProjectDetail();
+  }, [safeProjectId, navigate]);
   
   return {
     project,

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import type { ProjectDetail, Chapter } from '../../types/pipeline';
 
 interface UseIllustrationsControllerProps {
@@ -15,26 +16,25 @@ export const useIllustrationsController = ({ project, onUpdateProject }: UseIllu
     setError(null);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const userJson = localStorage.getItem('studio_user');
+      if (!userJson) return;
+      const user = JSON.parse(userJson);
 
-      const updatedChapters: Chapter[] = project.chapters.map((chap) => {
-          return {
-              ...chap,
-              illustrationUrl: `https://picsum.photos/seed/illustration-${chap.id}/1600/1000` 
-          };
+      const response = await axios.post(`http://localhost:3000/api/projects/${project.id}/illustrations`, {
+        version: project.version,
+      }, {
+        headers: { 'x-user-id': user.id }
       });
 
-      const updatedProject: ProjectDetail = {
-        ...project,
-        chapters: updatedChapters,
-        currentStep: 'ILLUSTRATIONS', 
-        status: 'COMPLETED',          
-      };
-
-      onUpdateProject(updatedProject);
+      onUpdateProject(response.data.project);
 
     } catch (err: any) {
-      setError('Failed to generate illustrations. Please try again.');
+      console.error('Failed to generate illustrations:', err);
+      if (err.response?.status === 409) {
+        setError('Conflict detected: Project updated elsewhere. Please refresh.');
+      } else {
+        setError(err.response?.data?.error || 'Failed to generate illustrations. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }
