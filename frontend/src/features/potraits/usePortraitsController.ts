@@ -19,7 +19,6 @@ export const usePortraitsController = ({ project, onUpdateProject }: UsePortrait
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const updatedCharacters: Character[] = project.characters.map((char) => {
-         
           return {
               ...char,
               portraitUrl: `https://picsum.photos/seed/${char.id}/400/600`
@@ -29,7 +28,7 @@ export const usePortraitsController = ({ project, onUpdateProject }: UsePortrait
       const updatedProject: ProjectDetail = {
         ...project,
         characters: updatedCharacters,
-        currentStep: 'PORTRAITS', // Auto-advance immediately without a second click
+        currentStep: 'PORTRAITS', 
       };
 
       onUpdateProject(updatedProject);
@@ -45,6 +44,6 @@ export const usePortraitsController = ({ project, onUpdateProject }: UsePortrait
     characters: project.characters || [],
     isProcessing,
     error,
-    handleGeneratePortraits,
+    handleGeneratePortraits, 
   };
 };
