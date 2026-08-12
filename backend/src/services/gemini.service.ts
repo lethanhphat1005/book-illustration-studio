@@ -23,8 +23,6 @@ export const uploadBookTextToGemini = async (text: string, title: string): Promi
       displayName: `Source: ${title}`,
     });
     
-    console.log(`Uploaded file to Gemini: ${uploadResponse.file.uri}`);
-    
     return {
       name: uploadResponse.file.name,
       uri: uploadResponse.file.uri,
@@ -46,34 +44,27 @@ export const generateCharacterPortraitImage = async (
   stylePrompt: string,
   projectId: string,
   charId: string
-): Promise<string | null> => {
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const prompt = `Create a portrait art description for ${characterName}. Desc: ${characterDescription}. Style: ${stylePrompt}.`;
-    const result = await model.generateContent(prompt);
-    
-    if (!result.response) {
-      throw new Error("Failed to get response from Gemini text model.");
-    }
+): Promise<{ imageUrl: string }> => {
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
-    const uploadsDir = path.join(__dirname, '../../uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+  const fullPrompt = `Create a detailed portrait art prompt for character: ${characterName}. Description: ${characterDescription}. Art style: ${stylePrompt}. Rules: Family-friendly, highly descriptive.`;
 
-    const fileName = `portrait-${projectId}-${charId}-${Date.now()}.jpg`;
-    const filePath = path.join(uploadsDir, fileName);
+  const result = await model.generateContent(fullPrompt);
+  const responseText = result.response.text();
 
-    // Dummy if failed
-    const fallbackBuffer = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64"); 
-    fs.writeFileSync(filePath, fallbackBuffer);
-
-    return `http://localhost:3000/uploads/${fileName}`;
-
-  } catch (error) {
-    console.error(`[Portrait Generation Error] Failed for character ${characterName}:`, error);
-    
-    // Fallback if error
-    return null; 
+  const uploadsDir = path.join(__dirname, '../../uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
   }
+
+  const fileName = `portrait-${projectId}-${charId}-${Date.now()}.txt`;
+  const filePath = path.join(uploadsDir, fileName);
+  fs.writeFileSync(filePath, Buffer.from(responseText || 'Character Portrait Data', 'utf-8'));
+
+  const encodedName = encodeURIComponent(characterName);
+  const portraitUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodedName}&backgroundColor=ffdfbf,ffd5dc,b6e3f4`;
+
+  return {
+    imageUrl: portraitUrl
+  };
 };

@@ -146,10 +146,13 @@ export const ProjectDetailPage = () => {
 
           <div className="hidden lg:block w-80">
             {project.stylePrompt && (
-              <div className="bg-[#f6f5f1] p-6 rounded-2xl">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Style</h4>
-                <p className="text-sm text-gray-800 leading-relaxed">
-                  {project.stylePrompt} <span className="text-gray-500">— Gemini will keep this in mind for every prompt below.</span>
+              <div className="bg-gradient-to-br from-[#FFEEDF]/60 to-white border border-[#ff6a00]/20 p-6 rounded-2xl shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#ff6a00]">Active Art Style</h4>
+                  <span className="w-2 h-2 rounded-full bg-[#ff6a00] animate-pulse"></span>
+                </div>
+                <p className="text-sm text-gray-800 leading-relaxed m-0 font-medium">
+                  {project.stylePrompt.replace(/— Gemini will keep this in mind.*$/, '').replace(/—\s*\.$/, '').trim()}
                 </p>
               </div>
             )}

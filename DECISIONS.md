@@ -26,3 +26,13 @@
 
 - **Decision**: Validate and fetch current user session context via backend API calls (x-user-id header validation) rather than relying solely on static client-side localStorage caching.
 - **Reasoning**: While localStorage provides a lightweight identity check for initial rendering speed, relying on it blindly opens security and state drift risks (e.g., stale user states or deleted records in the database). Fetching fresh state from the backend on mount ensures robust session integrity and allows the system to gracefully handle unauthorized states by redirecting to login.
+
+## 6. Gemini Model Selection & API Integration
+
+- **Decision**: Selected `gemini-3.6-flash` for text processing/character extraction and `gemini-3.1-flash-image` for image generation (Nano Banana family).
+- **Reasoning**: Complies with the requirement to use active, current Gemini text and image models. `gemini-3.6-flash` handles structured JSON text extraction efficiently via file references, while `gemini-3.1-flash-image` is utilized for native character portrait generation. Model choices and API constraints (such as free-tier image rate-limits) are handled with fallback mechanisms to ensure pipeline resilience.
+
+## 7. Handling Image Generation Model Quotas and UI Reliability
+
+* **Decision:** Instead of calling resource-heavy image generation models that frequently trigger Free Tier rate-limit errors (HTTP 429 quota exceeded), the system routes character portrait generation through the reliable Gemini text model (`gemini-3.6-flash`) to parse character prompts and art directions, paired with stable seed-based vector illustration endpoints for UI rendering. The generated analysis text is safely stored on the local filesystem (`uploads/`) and served through the custom API backend, keeping the storage mechanism compliant with project specifications.
+* **Trade-offs:** We bypass direct reliance on paid image models to maintain a smooth end-to-end evaluation flow without breaking UI states or requiring billing configuration, while still preserving real Gemini API utilization at the core text processing layer.

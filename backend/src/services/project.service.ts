@@ -7,8 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 try {
   loadEnvFile();
-} catch (err) {
-}
+} catch (err) {}
 
 const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({ connectionString });
@@ -66,20 +65,23 @@ export const createProjectRecord = async (
   });
 };
 
-
 export const advanceProjectStyle = async (
   projectId: string, 
   currentVersion: number, 
   stylePrompt: string
 ) => {
   try {
+    const formattedStyle = stylePrompt && stylePrompt.trim().length > 0
+      ? stylePrompt.trim()
+      : 'Warm, hand-painted storybook style with rich atmospheric lighting.';
+
     const updatedProject = await prisma.project.update({
       where: {
         id: projectId,
         version: currentVersion, 
       },
       data: {
-        stylePrompt,
+        stylePrompt: formattedStyle,
         currentStep: 'STYLE', 
         status: 'IDLE',
         version: { increment: 1 }, 
@@ -134,7 +136,6 @@ export const extractCharactersForProject = async (
     ];
   }
 
-  // Enforce hard requirement 2 characters
   const finalChars = extractedChars.slice(0, 2);
 
   await prisma.character.deleteMany({ where: { projectId } });
@@ -179,10 +180,12 @@ export const generatePortraitsForProject = async (
 
   if (!project) throw new Error('PROJECT_NOT_FOUND');
   if (project.characters.length === 0) throw new Error('NO_CHARACTERS_FOUND');
+  
+  // Đảm bảo tuân thủ hard requirement: Tối đa 2 nhân vật
   const targetCharacters = project.characters.slice(0, 2);
 
   for (const char of targetCharacters) {
-    const portraitUrl = await generateCharacterPortraitImage(
+    const result = await generateCharacterPortraitImage(
       char.name,
       char.description,
       project.stylePrompt || 'Classic storybook style',
@@ -192,7 +195,7 @@ export const generatePortraitsForProject = async (
 
     await prisma.character.update({
       where: { id: char.id },
-      data: { portraitUrl }
+      data: { portraitUrl: result.imageUrl }
     });
   }
 
