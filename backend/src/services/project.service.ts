@@ -13,6 +13,16 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+export const getProjectById = async (projectId: string, userId: string) => {
+  return await prisma.project.findFirst({
+    where: { id: projectId, userId },
+    include: {
+      characters: true,
+      chapters: true,
+    }
+  });
+};
+
 export const getProjectsByUserId = async (userId: string) => {
   return await prisma.project.findMany({
     where: { userId },
@@ -51,4 +61,30 @@ export const createProjectRecord = async (
       version: 0,                              
     }
   });
+};
+
+
+export const advanceProjectStyle = async (
+  projectId: string, 
+  currentVersion: number, 
+  stylePrompt: string
+) => {
+  try {
+    const updatedProject = await prisma.project.update({
+      where: {
+        id: projectId,
+        version: currentVersion, 
+      },
+      data: {
+        stylePrompt,
+        currentStep: 'STYLE', 
+        status: 'IDLE',
+        version: { increment: 1 }, 
+      },
+    });
+
+    return updatedProject;
+  } catch (error) {
+    throw new Error('OCC_CONFLICT');
+  }
 };

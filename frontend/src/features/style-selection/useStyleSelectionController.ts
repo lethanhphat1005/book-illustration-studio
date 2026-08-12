@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import axios from 'axios'; 
 import type { ProjectDetail } from '../../types/pipeline';
 
 const styleSchema = z.object({
@@ -50,18 +51,29 @@ export const useStyleSelectionController = ({ project, onUpdateProject }: UseSty
     const finalStylePrompt = `${baseStyle}${data.customDetails || ''}`.trim();
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const userJson = localStorage.getItem('studio_user');
+      if (!userJson) return;
+      const user = JSON.parse(userJson);
 
-      const updatedProject: ProjectDetail = {
-        ...project,
-        stylePrompt: finalStylePrompt, 
-        currentStep: 'STYLE',
-      };
+      const response = await axios.post(`http://localhost:3000/api/projects/${project.id}/advance`, {
+        currentStep: project.currentStep,
+        version: project.version, 
+        payload: {
+          stylePrompt: finalStylePrompt
+        }
+      }, {
+        headers: { 'x-user-id': user.id }
+      });
 
-      onUpdateProject(updatedProject);
+      onUpdateProject(response.data.project);
 
     } catch (error: any) {
-      setError('root', { type: 'server', message: 'Something went wrong.' });
+      console.error('Failed to save style:', error);
+      if (error.response?.status === 409) {
+        setError('root', { type: 'server', message: 'Conflict: The pipeline was modified in another session. Please refresh.' });
+      } else {
+        setError('root', { type: 'server', message: error.response?.data?.error || 'Failed to save style.' });
+      }
     } finally {
       setIsProcessing(false);
     }
