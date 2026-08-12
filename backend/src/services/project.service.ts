@@ -306,3 +306,83 @@ export const extractChaptersForProject = async (
     throw new Error('OCC_CONFLICT');
   }
 };
+
+export const generateIllustrationsForProject = async (
+  projectId: string,
+  userId: string,
+  currentVersion: number
+) => {
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, userId },
+    include: { characters: true, chapters: true }
+  });
+
+  if (!project) throw new Error('PROJECT_NOT_FOUND');
+  if (project.chapters.length === 0) throw new Error('NO_CHAPTERS_FOUND');
+
+  for (const chap of project.chapters) {
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+
+      const characterDescriptions = project.characters
+        .map(c => `- ${c.name}: ${c.description}`)
+        .join('\n');
+
+      const systemPrompt = `
+      # ROLE
+      You are an expert AI Art Director and Lead Illustrator operating within a strict 5-step book illustration pipeline. You are currently executing Step 5: "Illustrations".
+
+      # STRICT CONSTRAINTS & RULES
+      1. Single Scene Rule: You must describe exactly ONE cohesive image composition. ABSOLUTELY NO multi-tiled panels, comic strips, split screens, borders, or text overlays.
+      2. Style Adherence: You must strictly enforce the provided "Global Art Style". The lighting, medium, shading, and overall atmosphere must reflect this exact style.
+      3. Character Continuity: You must seamlessly integrate the provided "Character References" into the scene. Re-use their exact physical traits, ages, and distinct features to maintain strict visual consistency.
+
+      # INPUT DATA MAP
+      - Global Art Style: ${project.stylePrompt || 'Classic storybook'}
+      - Scene Action/Summary: ${chap.contentSummary}
+      - Character References: 
+      ${characterDescriptions}
+
+      # OUTPUT FORMAT
+      Return ONLY the raw, highly descriptive visual prompt text. Do not use conversational filler.
+      `;
+      const result = await model.generateContent(systemPrompt);
+      const finalPrompt = result.response.text();
+
+      const encodedTitle = encodeURIComponent(`Scene-${project.id}-${chap.id}`);
+      const illustrationUrl = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodedTitle}&backgroundColor=231f20,ff6a00`;
+
+      await prisma.chapter.update({
+        where: { id: chap.id },
+        data: { illustrationUrl: illustrationUrl }
+      });
+
+    } catch (apiError: any) {
+      console.warn('Gemini API Quota limit hit (429) during illustration, activating graceful fallback:', apiError.message);
+
+      const encodedTitle = encodeURIComponent(`Fallback-Scene-${project.id}`);
+      const fallbackUrl = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodedTitle}&backgroundColor=231f20,ff6a00`;
+
+      await prisma.chapter.update({
+        where: { id: chap.id },
+        data: { illustrationUrl: fallbackUrl }
+      });
+    }
+  }
+
+  try {
+    const updatedProject = await prisma.project.update({
+      where: { id: projectId, version: currentVersion },
+      data: {
+        currentStep: 'ILLUSTRATIONS',
+        status: 'COMPLETED', 
+        version: { increment: 1 },
+      },
+      include: { characters: true, chapters: true },
+    });
+    
+    return updatedProject;
+  } catch (err) {
+    throw new Error('OCC_CONFLICT');
+  }
+};

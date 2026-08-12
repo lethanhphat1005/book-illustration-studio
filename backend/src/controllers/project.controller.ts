@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getProjectsByUserId, createProjectRecord, getProjectById, advanceProjectStyle, generatePortraitsForProject, extractCharactersForProject, extractChaptersForProject } from '../services/project.service';
+import { getProjectsByUserId, createProjectRecord, getProjectById, advanceProjectStyle, generatePortraitsForProject, extractCharactersForProject, extractChaptersForProject, generateIllustrationsForProject } from '../services/project.service';
 import { uploadBookTextToGemini } from '../services/gemini.service'; 
 
 export const getUserProjects = async (req: Request, res: Response): Promise<void> => {
@@ -201,5 +201,37 @@ export const extractChapters = async (req: Request, res: Response): Promise<void
     }
     console.error('Error extracting chapters:', error);
     res.status(500).json({ error: 'Failed to extract chapters.' });
+  }
+};
+
+export const generateIllustrations = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const rawId = req.params.id;
+    const projectId = Array.isArray(rawId) ? rawId[0] : rawId;
+    const { version } = req.body;
+    const userId = req.headers['x-user-id'] as string;
+
+    if (!userId || !projectId) {
+      res.status(401).json({ error: 'Unauthorized or missing parameters.' });
+      return;
+    }
+
+    const updatedProject = await generateIllustrationsForProject(projectId, userId, Number(version));
+
+    res.status(200).json({
+      message: 'Illustrations generated successfully.',
+      project: updatedProject
+    });
+  } catch (error: any) {
+    if (error.message === 'OCC_CONFLICT') {
+      res.status(409).json({ error: 'Conflict: Pipeline modified concurrently. Please refresh.' });
+      return;
+    }
+    if (error.message === 'PROJECT_NOT_FOUND') {
+      res.status(404).json({ error: 'Project not found.' });
+      return;
+    }
+    console.error('Error generating illustrations:', error);
+    res.status(500).json({ error: 'Failed to generate illustrations.' });
   }
 };

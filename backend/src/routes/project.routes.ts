@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUserProjects, createProject, advanceProjectStep, getProjectDetails, extractCharacters, generatePortraits, extractChapters } from '../controllers/project.controller';
+import { getUserProjects, createProject, advanceProjectStep, getProjectDetails, extractCharacters, generatePortraits, extractChapters, generateIllustrations } from '../controllers/project.controller';
 
 const router = Router();
 
@@ -10,5 +10,6 @@ router.get('/:id', getProjectDetails);
 router.post('/:id/characters', extractCharacters);
 router.post('/:id/portraits', generatePortraits);
 router.post('/:id/chapters', extractChapters);
+router.post('/:id/illustrations', generateIllustrations);
 
 export default router;
