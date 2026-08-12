@@ -27,3 +27,28 @@ export const getProjectsByUserId = async (userId: string) => {
     },
   });
 };
+
+interface GeminiFileInfo {
+  name: string;
+  uri: string;
+  mimeType: string;
+}
+
+export const createProjectRecord = async (
+  title: string, 
+  userId: string, 
+  fileInfo: GeminiFileInfo
+) => {
+  return await prisma.project.create({
+    data: {
+      title,
+      userId,
+      geminiFileName: fileInfo.name,           
+      geminiFileUri: fileInfo.uri,             
+      geminiFileMimeType: fileInfo.mimeType,   
+      currentStep: 'INIT',                     
+      status: 'IDLE',                          
+      version: 0,                              
+    }
+  });
+};
