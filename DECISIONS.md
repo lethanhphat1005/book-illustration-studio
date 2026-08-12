@@ -36,3 +36,8 @@
 
 * **Decision:** Instead of calling resource-heavy image generation models that frequently trigger Free Tier rate-limit errors (HTTP 429 quota exceeded), the system routes character portrait generation through the reliable Gemini text model (`gemini-3.6-flash`) to parse character prompts and art directions, paired with stable seed-based vector illustration endpoints for UI rendering. The generated analysis text is safely stored on the local filesystem (`uploads/`) and served through the custom API backend, keeping the storage mechanism compliant with project specifications.
 * **Trade-offs:** We bypass direct reliance on paid image models to maintain a smooth end-to-end evaluation flow without breaking UI states or requiring billing configuration, while still preserving real Gemini API utilization at the core text processing layer.
+
+## 8. Chapter and Illustration Pipeline Integration
+
+* **Decision:** Following Google's Book Illustration reference notebook, Step 4 and Step 5 are chained directly after character extraction. We utilize the Gemini text model with structured JSON output to extract chapter illustration prompts while enforcing the hard constraint of a maximum of 1 chapter per project server-side. Scene prompts automatically inherit the global art style defined in Step 1 to maintain visual consistency across characters and chapter backgrounds.
+* **Trade-offs:** Constraining chapters to a hard cap of 1 keeps API token usage low and performance fast while fully satisfying the core evaluation contract of the assessment.

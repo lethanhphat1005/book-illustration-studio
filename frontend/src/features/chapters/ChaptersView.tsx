@@ -14,6 +14,8 @@ export const ChaptersView = ({ project, onUpdateProject }: ChaptersViewProps) =>
     handleGenerateChapters 
   } = useChaptersController({ project, onUpdateProject });
 
+  const chapters = project.chapters || [];
+
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500">
       <div className="flex-1">
@@ -26,9 +28,26 @@ export const ChaptersView = ({ project, onUpdateProject }: ChaptersViewProps) =>
           <span className="font-semibold text-[#ff6a00]">Quick Note:</span> To keep our storybook focused, we will carefully select and plan exactly <span className="font-bold text-gray-700">one key scene</span> to illustrate.
         </p>
         
-        <div className="flex items-center justify-center h-[200px] border-2 border-dashed border-gray-200 rounded-[1.25rem] bg-gray-50/50 mt-8 max-w-3xl">
-          <p className="text-gray-400 font-medium text-[15px]">No scenes planned yet. Click the button below to start.</p>
-        </div>
+        {chapters.length > 0 ? (
+          <div className="space-y-4 mt-8 max-w-3xl">
+            {chapters.map((chap) => (
+              <div key={chap.id} className="p-6 bg-white border border-gray-200 rounded-[1.25rem] shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="px-3 py-1 bg-[#ff6a00]/10 text-[#ff6a00] text-xs font-bold rounded-full">
+                    Chapter {chap.chapterNumber}
+                  </span>
+                </div>
+                <p className="text-gray-800 text-sm leading-relaxed font-medium">
+                  {chap.contentSummary}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-[200px] border-2 border-dashed border-gray-200 rounded-[1.25rem] bg-gray-50/50 mt-8 max-w-3xl">
+            <p className="text-gray-400 font-medium text-[15px]">No scenes planned yet. Click the button below to start.</p>
+          </div>
+        )}
 
         {project.characters && project.characters.length > 0 && (
           <div className="mt-12 pt-8 border-t border-gray-100">
@@ -61,7 +80,7 @@ export const ChaptersView = ({ project, onUpdateProject }: ChaptersViewProps) =>
 
         <button
           onClick={handleGenerateChapters}
-          disabled={isProcessing}
+          disabled={isProcessing || chapters.length > 0}
           className="px-8 py-3.5 bg-[#1a1a1a] text-white font-semibold text-[15px] rounded-xl hover:bg-black shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2.5 group"
         >
           {isProcessing ? (
@@ -72,6 +91,8 @@ export const ChaptersView = ({ project, onUpdateProject }: ChaptersViewProps) =>
               </svg>
               Planning Scenes...
             </>
+          ) : chapters.length > 0 ? (
+            'Scene Planned ✓'
           ) : (
             <>
               Generate Chapters

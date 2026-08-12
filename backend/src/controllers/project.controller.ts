@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getProjectsByUserId, createProjectRecord, getProjectById, advanceProjectStyle, generatePortraitsForProject, extractCharactersForProject } from '../services/project.service';
+import { getProjectsByUserId, createProjectRecord, getProjectById, advanceProjectStyle, generatePortraitsForProject, extractCharactersForProject, extractChaptersForProject } from '../services/project.service';
 import { uploadBookTextToGemini } from '../services/gemini.service'; 
 
 export const getUserProjects = async (req: Request, res: Response): Promise<void> => {
@@ -73,11 +73,10 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
 
 export const advanceProjectStep = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Xử lý an toàn tương tự cho id ở route advance
     const rawId = req.params.id;
     const projectId = Array.isArray(rawId) ? rawId[0] : rawId;
 
-    const { version, payload } = req.body; // payload chứa stylePrompt
+    const { version, payload } = req.body; 
     const userId = req.headers['x-user-id'] as string;
 
     if (!userId || !projectId) {
@@ -170,5 +169,37 @@ export const generatePortraits = async (req: Request, res: Response): Promise<vo
     }
     console.error('Error generating portraits:', error);
     res.status(500).json({ error: 'Failed to generate character portraits.' });
+  }
+};
+
+export const extractChapters = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const rawId = req.params.id;
+    const projectId = Array.isArray(rawId) ? rawId[0] : rawId;
+    const { version } = req.body;
+    const userId = req.headers['x-user-id'] as string;
+
+    if (!userId || !projectId) {
+      res.status(401).json({ error: 'Unauthorized or missing parameters.' });
+      return;
+    }
+
+    const updatedProject = await extractChaptersForProject(projectId, userId, Number(version));
+
+    res.status(200).json({
+      message: 'Chapters extracted successfully.',
+      project: updatedProject
+    });
+  } catch (error: any) {
+    if (error.message === 'OCC_CONFLICT') {
+      res.status(409).json({ error: 'Conflict: Pipeline modified concurrently. Please refresh.' });
+      return;
+    }
+    if (error.message === 'PROJECT_NOT_FOUND') {
+      res.status(404).json({ error: 'Project not found.' });
+      return;
+    }
+    console.error('Error extracting chapters:', error);
+    res.status(500).json({ error: 'Failed to extract chapters.' });
   }
 };
