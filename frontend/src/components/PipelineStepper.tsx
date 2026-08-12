@@ -15,9 +15,10 @@ interface PipelineStepperProps {
 }
 
 export const PipelineStepper = ({ currentStep, status, mode = 'active' }: PipelineStepperProps) => {
-  const currentStepIndex = PIPELINE_STEPS.findIndex(s => s.key === currentStep);
-  const activeIndex = mode === 'preview' || currentStep === 'INIT' ? -1 : currentStepIndex;
-
+  let currentStepIndex = PIPELINE_STEPS.findIndex(s => s.key === currentStep);
+  if (currentStep === 'INIT') currentStepIndex = -1; 
+  
+  const activeIndex = mode === 'preview' ? -1 : currentStepIndex + 1;
   return (
     <div className="flex items-center w-full">
       {PIPELINE_STEPS.map((step, index) => {

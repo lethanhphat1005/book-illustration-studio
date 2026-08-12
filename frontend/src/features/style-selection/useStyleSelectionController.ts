@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import axios from 'axios';
 import type { ProjectDetail } from '../../types/pipeline';
 
-// Zod schema enforcing either a preset or a valid custom description
 const styleSchema = z.object({
-  presetStyle: z.string().min(1, 'Please select a base style.'),
+  presetStyle: z.string(),
   customDetails: z.string().optional(),
 }).refine(
-  (data) => data.presetStyle !== 'Custom' || (data.customDetails && data.customDetails.length >= 5),
+  (data) => {
+    if (data.presetStyle === 'None (Use Custom Description Below)') {
+      return data.customDetails && data.customDetails.length >= 5;
+    }
+    return true; 
+  },
   {
-    message: 'Please provide at least 5 characters for your custom style.',
+    message: 'Please provide at least 5 characters for your custom style if no base aesthetic is selected.',
     path: ['customDetails'],
   }
 );
@@ -30,7 +33,6 @@ export const useStyleSelectionController = ({ project, onUpdateProject }: UseSty
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
     setError,
   } = useForm<StyleFormValues>({
@@ -41,45 +43,25 @@ export const useStyleSelectionController = ({ project, onUpdateProject }: UseSty
     },
   });
 
-  const selectedPreset = watch('presetStyle');
-  const isCustomMode = selectedPreset === 'Custom';
-
   const onSubmit = async (data: StyleFormValues) => {
     setIsProcessing(true);
     
-    // Combine preset and custom details into a single prompt for Gemini
-    const finalStylePrompt = isCustomMode 
-      ? data.customDetails! 
-      : `${data.presetStyle}. ${data.customDetails || ''}`.trim();
+    const baseStyle = data.presetStyle === 'None (Use Custom Description Below)' ? '' : `${data.presetStyle}. `;
+    const finalStylePrompt = `${baseStyle}${data.customDetails || ''}`.trim();
 
     try {
-      // POST to backend to save style and trigger Gemini
-      const response = await axios.post(`http://localhost:3000/api/projects/${project.id}/advance`, {
-        currentStep: project.currentStep,
-        version: project.version, 
-        payload: {
-          stylePrompt: finalStylePrompt
-        }
-      });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Update parent component with the new project state (now in CHARACTERS step)
-      onUpdateProject(response.data.project);
+      const updatedProject: ProjectDetail = {
+        ...project,
+        stylePrompt: finalStylePrompt, 
+        currentStep: 'STYLE',
+      };
+
+      onUpdateProject(updatedProject);
 
     } catch (error: any) {
-      console.error('Failed to save style and advance pipeline:', error);
-      
-      // STRICT CONCURRENCY RULE: Handle OCC Conflicts
-      if (error.response?.status === 409) {
-        setError('root', { 
-          type: 'server', 
-          message: 'Conflict: The pipeline was modified in another tab. Please refresh the page.' 
-        });
-      } else {
-        setError('root', { 
-          type: 'server', 
-          message: error.response?.data?.error || 'Failed to communicate with the Gemini API. Please try again.' 
-        });
-      }
+      setError('root', { type: 'server', message: 'Something went wrong.' });
     } finally {
       setIsProcessing(false);
     }
@@ -89,7 +71,6 @@ export const useStyleSelectionController = ({ project, onUpdateProject }: UseSty
     register,
     errors,
     isProcessing,
-    isCustomMode,
     submitHandler: handleSubmit(onSubmit),
   };
 };

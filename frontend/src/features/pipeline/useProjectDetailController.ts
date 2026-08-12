@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import type { ProjectDetail } from '../../types/pipeline';
 
 export const useProjectDetailController = () => {
-  // Lấy ID dự án từ URL (ví dụ: /projects/12345 thì projectId = 12345)
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
 
@@ -29,7 +28,7 @@ export const useProjectDetailController = () => {
           setProject({
             id: projectId || 'mock-123',
             title: 'The Wind in the Willows',
-            currentStep: 'INIT',
+            currentStep: 'INIT', 
             status: 'IDLE',
             version: 0,
             stylePrompt: null,
@@ -47,9 +46,10 @@ export const useProjectDetailController = () => {
 
     if (projectId) fetchProjectDetail();
   }, [projectId, navigate]);
-
+  
   return {
     project,
+    setProject, 
     isLoading,
     error,
     navigate,

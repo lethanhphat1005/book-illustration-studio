@@ -11,8 +11,7 @@ const PRESET_STYLES = [
   'Studio Ghibli Anime',
   'Dark Fantasy Digital Art',
   'Vintage Childrens Book Sketch',
-  'Cyberpunk Neon',
-  'Custom'
+  'Cyberpunk Neon'
 ];
 
 export const StyleSelectionView = ({ project, onUpdateProject }: StyleSelectionViewProps) => {
@@ -20,7 +19,6 @@ export const StyleSelectionView = ({ project, onUpdateProject }: StyleSelectionV
     register, 
     errors, 
     isProcessing, 
-    isCustomMode, 
     submitHandler 
   } = useStyleSelectionController({ project, onUpdateProject });
 
@@ -45,6 +43,7 @@ export const StyleSelectionView = ({ project, onUpdateProject }: StyleSelectionV
                 {...register('presetStyle')}
                 className="w-full appearance-none px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 text-sm focus:outline-none focus:border-[#ff6a00] focus:ring-4 focus:ring-[#ff6a00]/10 transition-all cursor-pointer shadow-sm"
               >
+                <option value="None (Use Custom Description Below)">None (Use Custom Description Below)</option>
                 {PRESET_STYLES.map(style => (
                   <option key={style} value={style}>{style}</option>
                 ))}
@@ -58,17 +57,14 @@ export const StyleSelectionView = ({ project, onUpdateProject }: StyleSelectionV
             {errors.presetStyle && <span className="text-xs text-red-500 mt-1 block">{errors.presetStyle.message}</span>}
           </div>
 
-          {/* Additional / Custom Details Text Area */}
+          {/* Details Text Area */}
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
-              {isCustomMode ? 'Custom Style Description' : 'Additional Modifiers (Optional)'}
+              Custom Style Description or Modifiers
             </label>
             <textarea
               {...register('customDetails')}
-              placeholder={isCustomMode 
-                ? "Describe the visual style in detail (e.g., 'Oil painting, chiaroscuro lighting, highly detailed faces...')" 
-                : "e.g., 'Make it slightly darker', 'Use pastel colors'"
-              }
+              placeholder="e.g., 'Oil painting, chiaroscuro lighting, highly detailed faces...' or 'Make it slightly darker'"
               className={`w-full h-32 px-4 py-3 bg-gray-50/50 border rounded-xl text-gray-800 text-sm leading-relaxed placeholder-gray-400 transition-all duration-200 focus:outline-none focus:bg-white focus:ring-4 resize-none ${
                 errors.customDetails 
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-100' 
