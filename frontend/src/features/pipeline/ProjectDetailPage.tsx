@@ -5,6 +5,7 @@ import type { PipelineStep } from '../../types/pipeline';
 import { useProjectDetailController } from './useProjectDetailController';
 import { CharactersView } from '../character-extraction/CharactersView';
 import { PortraitsView } from '../potraits/PortraitsView';
+import { ChaptersView } from '../chapters/ChaptersView';
 
 const PIPELINE_LABELS: Record<PipelineStep, string> = {
   INIT: 'Art Style',
@@ -120,6 +121,13 @@ export const ProjectDetailPage = () => {
               
               {project.currentStep === 'CHARACTERS' && (
                 <PortraitsView 
+                  project={project} 
+                  onUpdateProject={(updated) => setProject(updated)} 
+                />
+              )}
+
+              {project.currentStep === 'PORTRAITS' && (
+                <ChaptersView 
                   project={project} 
                   onUpdateProject={(updated) => setProject(updated)} 
                 />
