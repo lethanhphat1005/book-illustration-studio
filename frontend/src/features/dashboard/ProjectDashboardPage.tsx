@@ -1,9 +1,9 @@
 import { Header } from '../../components/Header';
 import { ProjectCard } from '../../components/ProjectCard';
-import { useProjectsController } from './useProjectsController';
+import { useProjectDashboardController } from './useProjectDashboardController';
 
 export const ProjectDashboardPage = () => {
-  const { projects, isLoading, error, handleCreateProject } = useProjectsController();
+  const { projects, isLoading, error, handleCreateProject } = useProjectDashboardController();
 
   return (
     <div className="min-h-screen bg-gray-50/50">

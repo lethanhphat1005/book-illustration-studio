@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import type { Project } from '../../components/ProjectCard';
 import { useNavigate } from 'react-router-dom';
+import type { Project } from '../../components/ProjectCard';
 
-export const useProjectsController = () => {
+export const useProjectDashboardController = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export const useProjectsController = () => {
   }, [navigate]);
 
   const handleCreateProject = () => {
-    navigate('/projects/new');
+    navigate('/projects/new'); 
   };
 
   return {

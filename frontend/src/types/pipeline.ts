@@ -5,6 +5,7 @@ export interface ProjectDetail {
   id: string;
   title: string;
   currentStep: PipelineStep;
+  version: number;
   status: JobStatus;
   stylePrompt?: string | null;
   characters: Character[];
