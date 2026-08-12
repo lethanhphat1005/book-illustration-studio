@@ -12,7 +12,7 @@
   "include": [
     "src/**/*",
     "prisma.config.ts"
-  ],
+, "../frontend/src/types"  ],
   "exclude": [
     "node_modules"
   ]
