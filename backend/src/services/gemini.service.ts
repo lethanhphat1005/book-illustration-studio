@@ -15,6 +15,7 @@ interface GeminiUploadResult {
 
 export const uploadBookTextToGemini = async (text: string, title: string): Promise<GeminiUploadResult> => {
   const tempFilePath = path.join(os.tmpdir(), `book-${Date.now()}.txt`);
+  console.log("🔑 Kiểm tra API Key:", process.env.GEMINI_API_KEY ? "Đã nhận được Key!" : "BỊ RỖNG (UNDEFINED)!")
   fs.writeFileSync(tempFilePath, text);
 
   try {
