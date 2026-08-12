@@ -1,20 +1,22 @@
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import authRoutes from './routes/auth.routes';
+import morgan from 'morgan'; 
 import projectRoutes from './routes/project.routes';
 
 const app = express();
-
-app.use(cors()); 
-app.use(express.json());
-
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
+app.use(express.json());
+
+app.use(morgan('dev')); 
+app.use('/api/projects', projectRoutes);
+
+app.get('/', (req, res) => {
+  res.send('Book Illustration Studio API is running smoothly!');
+});
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`\n🚀 Server is running flawlessly on http://localhost:${PORT}`);
+  console.log(`📡 Listening for incoming API requests...\n`);
 });
