@@ -12,6 +12,14 @@ export const useProjectDetailController = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const setProjectWithScroll = (updatedProject: ProjectDetail) => {
+    setProject(updatedProject);
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   useEffect(() => {
     const fetchProjectDetail = async () => {
       setIsLoading(true);
@@ -43,7 +51,7 @@ export const useProjectDetailController = () => {
   
   return {
     project,
-    setProject, 
+    setProject: setProjectWithScroll,
     isLoading,
     error,
     navigate,

@@ -17,12 +17,20 @@ A full-stack web application that transforms a book's text into character portra
 
 ## Environment Variables
 
-Create a `.env` file in the `backend` directory based on the provided `.env.example`:
+This project requires environment variables for both the backend and frontend. You can use the provided `.env.example` as a reference.
 
+**1. Backend (`backend/.env`)**
+Create a `.env` file in the `backend` directory:
 \`\`\`env
-GEMINI_API_KEY="your_actual_api_key_here"
-DATABASE_URL="postgresql://admin:password123@localhost:5432/gradion_db?schema=public"
 PORT=3000
+DATABASE_URL="postgresql://admin:password123@localhost:5432/gradion_db?schema=public"
+GEMINI_API_KEY="your_actual_api_key_here"
+\`\`\`
+
+**2. Frontend (`frontend/.env`)**
+Create a `.env` file in the `frontend` directory:
+\`\`\`env
+VITE_API_URL="http://localhost:3000"
 \`\`\`
 
 ## Running the Application
