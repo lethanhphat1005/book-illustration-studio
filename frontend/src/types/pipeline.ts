@@ -1,5 +1,5 @@
 export type PipelineStep = 'INIT' | 'STYLE' | 'CHARACTERS' | 'PORTRAITS' | 'CHAPTERS' | 'ILLUSTRATIONS';
-export type JobStatus = 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+export type JobStatus = 'IDLE' | 'RUNNING' | 'COMPLETED' | 'SUCCESS' | 'FAILED';
 
 export interface ProjectDetail {
   id: string;
